@@ -8,23 +8,39 @@
     <meta name="referrer" content="never">
     <title>文章列表</title>
     <style>
-        .add-button { width: 50%; padding: 10px; } 
-        form p>* { display: inline-block; } 
-        form p label { width: 120px; } 
-        form p input { padding: 10px; width: 300px; border: 1px solid #ccc; }
+        .add-button {
+            width: 50%;
+            padding: 10px;
+        }
+
+        form p>* {
+            display: inline-block;
+        }
+
+        form p label {
+            width: 120px;
+        }
+
+        form p input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
         <form>
-            <p> <label for="title">标题</label> <input v-model="title" id="title" type="text" /> </p>
-            <p> <label for="desc">描述</label> <input v-model="desc" id="desc" type="text" /> </p>
-            <p> <label for="date">时间</label> <input v-model="date" id="date" type="text" /> </p>
-            <p> <label for="author">作者</label> <input v-model="author" id="author" type="text" /> </p>
-            <p> <label for="cover">图片地址</label> <input v-model="cover" id="cover" type="text" /> </p>
-            <p> <label for="link">链接</label> <input v-model="link" id="link" type="text" /> </p>
-            <button id="add-btn" type="button" class="add-button">添加文章</button>
+            <p> <label for="title">标题</label> <input v-model="detail.title" id="title" type="text" /> </p>
+            <p> <label for="desc">描述</label> <input v-model="detail.desc" id="desc" type="text" /> </p>
+            <p> <label for="date">时间</label> <input v-model="detail.date" id="date" type="text" /> </p>
+            <p> <label for="author">作者</label> <input v-model="detail.author" id="author" type="text" /> </p>
+            <p> <label for="cover">图片地址</label> <input v-model="detail.cover" id="cover" type="text" /> </p>
+            <p> <label for="link">链接</label> <input v-model="detail.link" id="link" type="text" /> </p>
+            <button v-if="editable" id="add-btn" type="button" class="add-button">保存文章</button>
+            <button v-else="editable" id="add-btn" type="button" class="add-button">添加文章</button>
+            <button type="button" v-if="editable" @click="showAdd">显示添加</button>
         </form>
         <table class="article-list">
             <tr>
@@ -47,6 +63,7 @@
                     <img width="160" height="60" :src="item.cover" />
                 </td>
                 <td>
+                    <button @click="edit(item.id)">编辑</button>
                     <button @click="del(item.id)">删除</button>
                 </td>
             </tr>
@@ -59,45 +76,85 @@
         var vm = new Vue({
             el: '#app',
             data: {
-                title: "",
-                desc: "",
-                date: "",
-                cover: "",
-                author: "",
-                link: "",
+                editable: false,
+                detail: {
+                    title: "",
+                    desc: "",
+                    date: "",
+                    cover: "",
+                    author: "",
+                    link: "",
+                },
                 items: []
             },
-            methods:{
-                del(inId){
+            methods: {
+                del(inId) {
                     $.ajax({
-                        url:`/posts/${inId}`,
-                        type:'DELETE',
-                        success:function(){
+                        url: `/posts/${inId}`,
+                        type: 'DELETE',
+                        success: function () {
                             console.log('init!');
                             init();
                         }
                     })
+                },
+                edit(inId) {
+                    vm.editable = true;
+                    $.ajax({
+                        url: `/posts/${inId}`,
+                        type: 'GET',
+                        success: function (resp) {
+                            const item = vm.items.filter(item => item.id === inId)[0];
+                            console.log(item);
+                            vm.detail = item;
+                        }
+                    })
+                },
+                showAdd() {
+                    vm.editable = false;
+                    vm.detail = {
+                        title: "",
+                        desc: "",
+                        date: "",
+                        cover: "",
+                        author: "",
+                        link: "",
+                    };
                 }
             }
         });
 
         init();
-        function init(){
+        function init() {
             $.get('/posts', function (data) {
                 // console.log(data.posts.reverse());
                 vm.items = data.reverse();
             });
         }
         //init:
-        
+
         $('#add-btn').click(function () {
-            const { title, desc, date, cover, link, author} = vm;
-            const result = { title, desc, date, cover, link, author };
-            // result.id = vm.items[0].id + 1;
-            $.post('/posts',result,function(resp){
-                console.log(resp);
-                init();
-            })
+            if (!vm.editable) {
+                //add
+                const { detail } = vm;
+                detail.id = vm.items[0].id + 1;
+                $.post('/posts', detail, function (resp) {
+                    console.log(resp);
+                    init();
+                })
+            } else {
+                //edit:
+                const { detail } = vm;
+                $.ajax({
+                    url: `/posts/${detail.id}`,
+                    type: 'PUT',
+                    data: detail,
+                    success: function () {
+                        init();
+                        vm.editable = false;
+                    }
+                })
+            }
         });
 
     </script>
