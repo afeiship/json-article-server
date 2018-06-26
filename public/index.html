@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="referrer" content="never">
+    <title>文章列表</title>
+    <style>
+        .add-button { width: 50%; padding: 10px; } 
+        form p>* { display: inline-block; } 
+        form p label { width: 120px; } 
+        form p input { padding: 10px; width: 300px; border: 1px solid #ccc; }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <form>
+            <p> <label for="title">标题</label> <input v-model="title" id="title" type="text" /> </p>
+            <p> <label for="desc">描述</label> <input v-model="desc" id="desc" type="text" /> </p>
+            <p> <label for="date">时间</label> <input v-model="date" id="date" type="text" /> </p>
+            <p> <label for="author">作者</label> <input v-model="author" id="author" type="text" /> </p>
+            <p> <label for="cover">图片地址</label> <input v-model="cover" id="cover" type="text" /> </p>
+            <p> <label for="link">链接</label> <input v-model="link" id="link" type="text" /> </p>
+            <button id="add-btn" type="button" class="add-button">添加文章</button>
+        </form>
+        <table class="article-list">
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>描述</th>
+                <th>时间</th>
+                <th>作者</th>
+                <th>图片地址</th>
+            </tr>
+            <tr v-for="(item, index) in items">
+                <td>{{item.id}}</td>
+                <td>
+                    <a :href="item.link">{{item.title}}</a>
+                </td>
+                <td>{{item.desc}}</td>
+                <td>{{item.date}}</td>
+                <td>{{item.author}}</td>
+                <td>
+                    <img width="160" height="60" :src="item.cover" />
+                </td>
+                <td>
+                    <button @click="del(item.id)">删除</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <script src="https://cdn.bootcss.com/zepto/1.2.0/zepto.min.js"></script>
+    <script src="https://cdn.bootcss.com/vue/2.5.17-beta.0/vue.min.js"></script>
+    <script>
+        //initVm:
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                title: "",
+                desc: "",
+                date: "",
+                cover: "",
+                author: "",
+                link: "",
+                items: []
+            },
+            methods:{
+                del(inId){
+                    $.ajax({
+                        url:`/posts/${inId}`,
+                        type:'DELETE',
+                        success:function(){
+                            console.log('init!');
+                            init();
+                        }
+                    })
+                }
+            }
+        });
+
+        init();
+        function init(){
+            $.get('/posts', function (data) {
+                // console.log(data.posts.reverse());
+                vm.items = data.reverse();
+            });
+        }
+        //init:
+        
+        $('#add-btn').click(function () {
+            const { title, desc, date, cover, link, author} = vm;
+            const result = { title, desc, date, cover, link, author };
+            // result.id = vm.items[0].id + 1;
+            $.post('/posts',result,function(resp){
+                console.log(resp);
+                init();
+            })
+        });
+
+    </script>
+</body>
+
+</html>
