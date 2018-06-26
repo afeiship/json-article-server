@@ -3,9 +3,14 @@ const server = jsonServer.create();
 const router = jsonServer.router('./src/data/article.json');
 const middlewares = jsonServer.defaults();
 const serveStatic = require('serve-static');
+const port = 3002;
+
+
 server.use(serveStatic('public'));
 server.use(middlewares);
 server.use(router);
-server.listen(3002, () => {
-    console.log('JSON Server is running at: 3002');
+
+
+server.listen(port, () => {
+    console.log(`JSON Server is running at: http://localhost:${port}`);
 });
